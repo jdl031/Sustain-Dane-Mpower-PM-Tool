@@ -24,13 +24,39 @@ Functions
 * Mark task as complete
 * Notifications: Task Create, Note Post (next phase)
 
-	[Notes on Functions]
+	[API]
 	--------------------
-	/Projects/							POST: Create Project, GET: List of Projects, DELETE: N/A
-	/Projects/<projectID>				POST: Edit, GET: Overview of single project, DELETE: Remove project
-	/Projects/<projectID>/Tasks/		POST: Create Task, GET: List of Tasks under project, DELETE: N/A
-	...
-	/Users/<userID>/Tasks				GET: List of user's tasks
+	GET     /companies
+	POST    /companies
+	GET     /companies/<company_id>
+	PUT     /companies/<company_id>
+	DELETE  /companies/<company_id>
+	GET     /companies/<company_id>/projects
+
+	GET     /projects
+	POST    /projects
+	GET     /projects/<project_id>
+	PUT     /projects/<project_id>
+	DELETE  /projects/<project_id>
+	GET     /projects/<project_id>/tasks
+
+	GET     /tasks
+	POST    /tasks
+	GET     /tasks/<task_id>
+	PUT     /tasks/<task_id>
+	DELETE  /tasks/<task_id>
+	GET     /tasks/<task_id>/notes
+
+	GET     /notes
+	POST    /notes
+	GET     /notes/<note_id>
+	PUT     /notes/<note_id>
+	DELETE  /notes/<note_id>
+
+	GET     /users
+	GET     /users/<user_id>
+	GET     /users/<user_id>/tasks
+
 
 
 General
