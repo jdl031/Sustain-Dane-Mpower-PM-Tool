@@ -1,5 +1,5 @@
 import sqlite3
-from flask import Flask, render_template, g, url_for, json, Response
+from flask import Flask, render_template, g, url_for, json, Response, request
 app = Flask(__name__)
 
 DATABASE = 'test.db'
@@ -23,67 +23,138 @@ def teardown_request(exception):
 def sitemap():
 	routes = []
 	for rule in app.url_map.iter_rules():
-		if "GET" in rule.methods:
-			routes.append(str(rule))
-	routes.sort()
-	return Response(json.dumps(routes), mimetype='application/json')
+		methods = [m for m in rule.methods if m != 'HEAD' and m != 'OPTIONS']
+		routes.append('%-6s'%list(methods)[0] + ' ' + str(rule))
+	routes.sort(cmp=lambda a,b: cmp(a.split()[1], b.split()[1]))
+	return Response('sitemap:'+json.dumps(routes, indent=2), mimetype='text/plain')
 
 
+#
+# Companies API
+#
 @app.route('/companies')
 def companies():
 	companies = query_db('select * from companies')
 	return json.dumps(companies)
+
+@app.route('/companies', methods=['POST'])
+def post_company():
+	companies = g.db.execute('insert into companies (name) values (?)', (request.json['name'],))
+	company_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
+	g.db.commit()
+	return json.dumps(company_id)
 
 @app.route('/companies/<company_id>')
 def company(company_id):
 	companies = query_db('select * from companies where id=?', company_id)
 	return json.dumps(companies[0])
 
+@app.route('/companies/<company_id>', methods=['DELETE'])
+def delete_company(company_id):
+	g.db.execute('delete from companies where id=?', (company_id,))
+	g.db.commit()
+	return 'success'
+
 @app.route('/companies/<company_id>/projects')
 def company_projects(company_id):
 	projects = query_db('select * from projects where company_id=?', company_id)
 	return json.dumps(projects)
 
+
+#
+# Projects API
+#
 @app.route('/projects')
 def projects():
 	projects = query_db('select * from projects')
 	return json.dumps(projects)
+
+@app.route('/projects', methods=['POST'])
+def post_project():
+	projects = g.db.execute('insert into projects (name, company_id) values (?, ?)', (request.json['name'],request.json['company_id']))
+	project_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
+	g.db.commit()
+	return json.dumps(project_id)
 
 @app.route('/projects/<project_id>')
 def project(project_id):
 	projects = query_db('select * from projects where id = ?', project_id)
 	return json.dumps(projects[0])
 
+@app.route('/projects/<project_id>', methods=['DELETE'])
+def delete_project(project_id):
+	g.db.execute('delete from projects where id=?', (project_id,))
+	g.db.commit()
+	return 'success'
+
 @app.route('/projects/<project_id>/tasks')
 def project_tasks(project_id):
 	tasks = query_db('select * from tasks where project_id = ?', project_id)
 	return json.dumps(tasks)
 
+
+#
+# Tasks API
+#
 @app.route('/tasks')
 def tasks():
 	tasks = query_db('select * from tasks')
 	return json.dumps(tasks)
+
+@app.route('/tasks', methods=['POST'])
+def post_task():
+	tasks = g.db.execute('insert into tasks (title, project_id, date_created) values (?, ?, current_timestamp)', (request.json['title'],request.json['project_id']))
+	task_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
+	g.db.commit()
+	return json.dumps(task_id)
 
 @app.route('/tasks/<task_id>')
 def task(task_id):
 	tasks = query_db('select * from tasks where id=?', task_id)
 	return json.dumps(tasks[0])
 
+@app.route('/tasks/<task_id>', methods=['DELETE'])
+def delete_task(task_id):
+	g.db.execute('delete from tasks where id=?', (task_id,))
+	g.db.commit()
+	return 'success'
+
 @app.route('/tasks/<task_id>/notes')
 def task_notes(task_id):
 	notes = query_db('select * from notes where task_id=?', task_id)
 	return json.dumps(notes)
 
+
+#
+# Notes API
+#
 @app.route('/notes')
 def notes():
 	notes = query_db('select * from notes')
 	return json.dumps(notes)
+
+@app.route('/notes', methods=['POST'])
+def post_note():
+	tasks = g.db.execute('insert into notes (text, task_id) values (?, ?)', (request.json['text'],request.json['task_id']))
+	task_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
+	g.db.commit()
+	return json.dumps(task_id)
 
 @app.route('/notes/<note_id>')
 def note(note_id):
 	notes = query_db('select * from notes where id=?', note_id)
 	return json.dumps(notes[0])
 
+@app.route('/notes/<note_id>', methods=['DELETE'])
+def delete_note(note_id):
+	g.db.execute('delete from notes where id=?', (note_id,))
+	g.db.commit()
+	return 'success'
+
+
+#
+# Users API
+#
 @app.route('/users')
 def users():
 	users = query_db('select * from users')
