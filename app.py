@@ -39,13 +39,20 @@ def companies():
 
 @app.route('/companies', methods=['POST'])
 def post_company():
-	companies = g.db.execute('insert into companies (name) values (?)', (request.json['name'],))
+	g.db.execute('insert into companies (name) values (?)', (request.json['name'],))
 	company_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
 	g.db.commit()
 	return json.dumps(company_id)
 
 @app.route('/companies/<company_id>')
 def company(company_id):
+	companies = query_db('select * from companies where id=?', company_id)
+	return json.dumps(companies[0])
+
+@app.route('/companies/<company_id>', methods=['PUT'])
+def put_company(company_id):
+	g.db.execute('update companies set name=? where id=?', (request.json['name'], company_id))
+	g.db.commit()
 	companies = query_db('select * from companies where id=?', company_id)
 	return json.dumps(companies[0])
 
@@ -71,7 +78,7 @@ def projects():
 
 @app.route('/projects', methods=['POST'])
 def post_project():
-	projects = g.db.execute('insert into projects (name, company_id) values (?, ?)', (request.json['name'],request.json['company_id']))
+	g.db.execute('insert into projects (name, company_id) values (?, ?)', (request.json['name'],request.json['company_id']))
 	project_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
 	g.db.commit()
 	return json.dumps(project_id)
@@ -79,6 +86,13 @@ def post_project():
 @app.route('/projects/<project_id>')
 def project(project_id):
 	projects = query_db('select * from projects where id = ?', project_id)
+	return json.dumps(projects[0])
+
+@app.route('/projects/<project_id>', methods=['PUT'])
+def put_project(project_id):
+	g.db.execute('update projects set name=? where id=?', (request.json['name'], project_id))
+	g.db.commit()
+	projects = query_db('select * from projects where id=?', project_id)
 	return json.dumps(projects[0])
 
 @app.route('/projects/<project_id>', methods=['DELETE'])
@@ -103,13 +117,20 @@ def tasks():
 
 @app.route('/tasks', methods=['POST'])
 def post_task():
-	tasks = g.db.execute('insert into tasks (title, project_id, date_created) values (?, ?, current_timestamp)', (request.json['title'],request.json['project_id']))
+	g.db.execute('insert into tasks (title, project_id, date_created) values (?, ?, current_timestamp)', (request.json['title'],request.json['project_id']))
 	task_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
 	g.db.commit()
 	return json.dumps(task_id)
 
 @app.route('/tasks/<task_id>')
 def task(task_id):
+	tasks = query_db('select * from tasks where id=?', task_id)
+	return json.dumps(tasks[0])
+
+@app.route('/tasks/<task_id>', methods=['PUT'])
+def put_task(task_id):
+	g.db.execute('update tasks set title=?, project_id=? where id=?', (request.json['title'], request.json['project_id'], task_id))
+	g.db.commit()
 	tasks = query_db('select * from tasks where id=?', task_id)
 	return json.dumps(tasks[0])
 
@@ -135,13 +156,20 @@ def notes():
 
 @app.route('/notes', methods=['POST'])
 def post_note():
-	tasks = g.db.execute('insert into notes (text, task_id) values (?, ?)', (request.json['text'],request.json['task_id']))
+	g.db.execute('insert into notes (text, task_id) values (?, ?)', (request.json['text'],request.json['task_id']))
 	task_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
 	g.db.commit()
 	return json.dumps(task_id)
 
 @app.route('/notes/<note_id>')
 def note(note_id):
+	notes = query_db('select * from notes where id=?', note_id)
+	return json.dumps(notes[0])
+
+@app.route('/notes/<note_id>', methods=['PUT'])
+def put_note(note_id):
+	g.db.execute('update notes set text=? where id=?', (request.json['text'], note_id))
+	g.db.commit()
 	notes = query_db('select * from notes where id=?', note_id)
 	return json.dumps(notes[0])
 
