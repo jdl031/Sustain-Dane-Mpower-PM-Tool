@@ -22,40 +22,42 @@ Functions
 * Get Notes from Task ID
 * Get Tasks from User ID (for "my tasks page")
 * Mark task as complete
+* Flask API unittesting
+* Return createdresource url in POST 201 response
 * Notifications: Task Create, Note Post (next phase)
 
 	[API]
 	--------------------
-	GET     /companies
-	POST    /companies
-	GET     /companies/<company_id>
-	PUT     /companies/<company_id>
-	DELETE  /companies/<company_id>
-	GET     /companies/<company_id>/projects
+	GET     /companies 200
+	POST    /companies 201
+	GET     /companies/<company_id> 200, 404
+	PUT     /companies/<company_id> 204, 400, 404
+	DELETE  /companies/<company_id> 204, 404
+	GET     /companies/<company_id>/projects 200, 404
 
-	GET     /projects
-	POST    /projects
-	GET     /projects/<project_id>
-	PUT     /projects/<project_id>
-	DELETE  /projects/<project_id>
-	GET     /projects/<project_id>/tasks
+	GET     /projects 200
+	POST    /projects 201
+	GET     /projects/<project_id> 200, 404
+	PUT     /projects/<project_id> 204, 400, 404
+	DELETE  /projects/<project_id> 204, 404
+	GET     /projects/<project_id>/tasks 200, 404
 
-	GET     /tasks
-	POST    /tasks
-	GET     /tasks/<task_id>
-	PUT     /tasks/<task_id>
-	DELETE  /tasks/<task_id>
-	GET     /tasks/<task_id>/notes
+	GET     /tasks 200
+	POST    /tasks 201
+	GET     /tasks/<task_id> 200, 404
+	PUT     /tasks/<task_id> 204, 400, 404
+	DELETE  /tasks/<task_id> 204, 404
+	GET     /tasks/<task_id>/notes 200, 404
 
-	GET     /notes
-	POST    /notes
-	GET     /notes/<note_id>
-	PUT     /notes/<note_id>
-	DELETE  /notes/<note_id>
+	GET     /notes 200
+	POST    /notes 201
+	GET     /notes/<note_id> 200, 404
+	PUT     /notes/<note_id> 204, 400, 404
+	DELETE  /notes/<note_id> 204, 404
 
-	GET     /users
-	GET     /users/<user_id>
-	GET     /users/<user_id>/tasks
+	GET     /users 200
+	GET     /users/<user_id> 200, 404
+	GET     /users/<user_id>/tasks 200, 404
 
 
 
