@@ -18,31 +18,51 @@ class SustainDaneTestCase(unittest.TestCase):
 
     def test_companies_empty(self):
         r = self.app.get('/companies')
-        assert json.loads(r.data) == {"items":[]}
+        self.assertEqual(r.content_type, 'application/json')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(json.loads(r.data), {"items":[]})
 
     def test_post_company(self):
         r = self.app.post('/companies', data='{"name":"test"}', content_type='application/json')
+        self.assertEqual(r.content_type, 'application/json')
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(json.loads(r.data), {"result":1})
 
     def test_projects_empty(self):
         r = self.app.get('/projects')
-        assert json.loads(r.data) == {"items":[]}
+        self.assertEqual(r.content_type, 'application/json')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(json.loads(r.data), {"items":[]})
 
     def test_post_project(self):
         r = self.app.post('/projects', data='{"name":"test", "company_id": 1}', content_type='application/json')
+        self.assertEqual(r.content_type, 'application/json')
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(json.loads(r.data), {"result":1})
 
     def test_tasks_empty(self):
         r = self.app.get('/tasks')
-        assert json.loads(r.data) == {"items":[]}
+        self.assertEqual(r.content_type, 'application/json')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(json.loads(r.data), {"items":[]})
 
     def test_post_task(self):
-        r = self.app.post('/task', data='{"title":"test"}', content_type='application/json')
+        r = self.app.post('/tasks', data='{"title":"test", "project_id": 1}', content_type='application/json')
+        self.assertEqual(r.content_type, 'application/json')
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(json.loads(r.data), {"result":1})
 
     def test_notes_empty(self):
         r = self.app.get('/notes')
-        assert json.loads(r.data) == {"items":[]}
+        self.assertEqual(r.content_type, 'application/json')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(json.loads(r.data), {"items":[]})
 
-    def test_post_notes(self):
-        r = self.app.post('/notes', data='{"text":"test", "task_id", 1}', content_type='application/json')
+    def test_post_note(self):
+        r = self.app.post('/notes', data='{"text": "test", "task_id": 1}', content_type='application/json')
+        self.assertEqual(r.content_type, 'application/json')
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(json.loads(r.data), {"result":1})
 
 if __name__ == '__main__':
 	unittest.main()

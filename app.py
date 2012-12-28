@@ -234,7 +234,7 @@ def notes():
 		'additionalProperties': False,
 		'properties': {
 			'text': { 'type': 'string' },
-			'task_id': { 'type': 'task_id' }
+			'task_id': { 'type': 'integer' }
 		}
 	}
 )
