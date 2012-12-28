@@ -24,6 +24,7 @@ Functions
 * Mark task as complete
 * Flask API unittesting
 * Return createdresource url in POST 201 response
+* Give all objects created, updated timestamps?
 * Notifications: Task Create, Note Post (next phase)
 
 	[API]

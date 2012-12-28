@@ -1,18 +1,16 @@
 from functools import wraps
 import sqlite3
 import jsonschema
-from flask import Flask, render_template, g, url_for, json, Response, request, abort
+from flask import Flask, render_template, g, url_for, json, Response, request, abort, jsonify
 app = Flask(__name__)
 
-DATABASE = 'test.db'
+app.config['DATABASE'] = 'test.db'
 
 
 def json_validate(schema):
 	def decorator(f):
 		@wraps(f)
 		def decorated_function(*args, **kwargs):
-			print schema
-			print 'json_validate'
 			v = jsonschema.Draft3Validator(schema)
 			errors = [str(error) for error in v.iter_errors(request.json)]
 			if len(errors) > 0:
@@ -30,7 +28,7 @@ def query_db(query, *args):
 
 @app.before_request
 def before_request():
-	g.db = sqlite3.connect(DATABASE)
+	g.db = sqlite3.connect(app.config['DATABASE'])
 
 @app.teardown_request
 def teardown_request(exception):
@@ -46,8 +44,10 @@ def sitemap():
 	routes.sort(cmp=lambda a,b: cmp(a.split()[1], b.split()[1]))
 	return Response('sitemap:'+json.dumps(routes, indent=2), mimetype='text/plain')
 
-def JSONResponse(json, status=200):
-	return Response(json, status, mimetype='application/json')
+def JSONResponse(data, status=200):
+	response = jsonify(data)
+	response.status_code = status
+	return response
 
 #
 # Companies API
@@ -55,7 +55,7 @@ def JSONResponse(json, status=200):
 @app.route('/companies')
 def companies():
 	companies = query_db('select * from companies')
-	return json.dumps(companies)
+	return JSONResponse({'items':companies})
 
 @app.route('/companies', methods=['POST'])
 @json_validate(
@@ -71,14 +71,14 @@ def post_company():
 	g.db.execute('insert into companies (name) values (?)', (request.json['name'],))
 	company_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
 	g.db.commit()
-	return JSONResponse(json.dumps(company_id), 201)
+	return JSONResponse({'result':company_id}, 201)
 
 @app.route('/companies/<company_id>')
 def company(company_id):
 	companies = query_db('select * from companies where id=?', company_id)
 	if len(companies) == 0:
 		return abort(404)
-	return JSONResponse(json.dumps(companies[0]))
+	return JSONResponse(companies[0])
 
 @app.route('/companies/<company_id>', methods=['PUT'])
 def put_company(company_id):
@@ -102,7 +102,7 @@ def delete_company(company_id):
 @app.route('/companies/<company_id>/projects')
 def company_projects(company_id):
 	projects = query_db('select * from projects where company_id=?', company_id)
-	return JSONResponse(json.dumps(projects))
+	return JSONResponse({'items':projects})
 
 
 #
@@ -111,7 +111,7 @@ def company_projects(company_id):
 @app.route('/projects')
 def projects():
 	projects = query_db('select * from projects')
-	return JSONResponse(json.dumps(projects))
+	return JSONResponse({'items':projects})
 
 @app.route('/projects', methods=['POST'])
 @json_validate(
@@ -128,14 +128,14 @@ def post_project():
 	g.db.execute('insert into projects (name, company_id) values (?, ?)', (request.json['name'],request.json['company_id']))
 	project_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
 	g.db.commit()
-	return JSONResponse(json.dumps(project_id), 201)
+	return JSONResponse({'result':project_id}, 201)
 
 @app.route('/projects/<project_id>')
 def project(project_id):
 	projects = query_db('select * from projects where id = ?', project_id)
 	if len(projects) == 0:
 		return abort(404)
-	return JSONResponse(json.dumps(projects[0]))
+	return JSONResponse(projects[0])
 
 @app.route('/projects/<project_id>', methods=['PUT'])
 def put_project(project_id):
@@ -159,7 +159,7 @@ def delete_project(project_id):
 @app.route('/projects/<project_id>/tasks')
 def project_tasks(project_id):
 	tasks = query_db('select * from tasks where project_id = ?', project_id)
-	return JSONResponse(json.dumps(tasks))
+	return JSONResponse({'items':tasks})
 
 
 #
@@ -168,7 +168,7 @@ def project_tasks(project_id):
 @app.route('/tasks')
 def tasks():
 	tasks = query_db('select * from tasks')
-	return JSONResponse(json.dumps(tasks))
+	return JSONResponse({'items':tasks})
 
 @app.route('/tasks', methods=['POST'])
 @json_validate(
@@ -185,14 +185,14 @@ def post_task():
 	g.db.execute('insert into tasks (title, project_id, date_created) values (?, ?, current_timestamp)', (request.json['title'],request.json['project_id']))
 	task_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
 	g.db.commit()
-	return JSONResponse(json.dumps(task_id), 201)
+	return JSONResponse({'result':task_id}, 201)
 
 @app.route('/tasks/<task_id>')
 def task(task_id):
 	tasks = query_db('select * from tasks where id=?', task_id)
 	if len(tasks) == 0:
 		return abort(404)
-	return JSONResponse(json.dumps(tasks[0]))
+	return JSONResponse(tasks[0])
 
 @app.route('/tasks/<task_id>', methods=['PUT'])
 def put_task(task_id):
@@ -216,7 +216,7 @@ def delete_task(task_id):
 @app.route('/tasks/<task_id>/notes')
 def task_notes(task_id):
 	notes = query_db('select * from notes where task_id=?', task_id)
-	return JSONResponse(json.dumps(notes))
+	return JSONResponse({'items':notes})
 
 
 #
@@ -225,7 +225,7 @@ def task_notes(task_id):
 @app.route('/notes')
 def notes():
 	notes = query_db('select * from notes')
-	return JSONResponse(json.dumps(notes))
+	return JSONResponse({'items':notes})
 
 @app.route('/notes', methods=['POST'])
 @json_validate(
@@ -242,14 +242,14 @@ def post_note():
 	g.db.execute('insert into notes (text, task_id) values (?, ?)', (request.json['text'],request.json['task_id']))
 	task_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
 	g.db.commit()
-	return JSONResponse(json.dumps(task_id), 201)
+	return JSONResponse({'result':task_id}, 201)
 
 @app.route('/notes/<note_id>')
 def note(note_id):
 	notes = query_db('select * from notes where id=?', note_id)
 	if len(notes) == 0:
 		return abort(404)
-	return JSONResponse(json.dumps(notes[0]))
+	return JSONResponse(notes[0])
 
 @app.route('/notes/<note_id>', methods=['PUT'])
 def put_note(note_id):
@@ -282,16 +282,15 @@ def users():
 @app.route('/users/<user_id>')
 def user(user_id):
 	users = query_db('select * from users where id=?', user_id)
-	return JSONResponse(json.dumps(users[0]))
+	return JSONResponse(users[0])
 
 @app.route('/users/<user_id>/tasks')
 def user_tasks(user_id):
 	tasks = query_db('select * from tasks where owner_id=?', user_id)
-	return JSONResponse(json.dumps(tasks))
+	return JSONResponse({'items':tasks})
 
 
 
 if __name__ == '__main__':
 	app.run(debug=True)
-
 
