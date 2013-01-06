@@ -6,9 +6,11 @@ app = Flask(__name__)
 
 app.config['DATABASE'] = 'test.db'
 app.secret_key = '\xafW>\xe9\xa1\xc0\x7f\x05\x86\xdb%g\x87\x8c_\x7fD\x0f\x81\x0cS.\xca\xbf'
+current_user = None
 
 
 def require_login(fn):
+	@wraps(fn)
 	def wrapped(*args, **kwargs):
 		response = Response('Login Required', status=403)
 		user_id = request.cookies.get('session', None)
@@ -17,6 +19,8 @@ def require_login(fn):
 		users = query_db('select * from users where id=?', user_id)
 		if len(users) == 0:
 			return response
+		global current_user
+		current_user = users[0]
 		return fn(*args, **kwargs)
 	return wrapped
 
@@ -55,7 +59,7 @@ def sitemap():
 		methods = [m for m in rule.methods if m != 'HEAD' and m != 'OPTIONS']
 		routes.append('%-6s'%list(methods)[0] + ' ' + str(rule))
 	routes.sort(cmp=lambda a,b: cmp(a.split()[1], b.split()[1]))
-	return Response('sitemap:'+json.dumps(routes, indent=2), mimetype='text/plain')
+	return Response(json.dumps(routes, indent=2), mimetype='text/plain')
 
 def JSONResponse(data, status=200):
 	response = jsonify(data)
@@ -325,6 +329,7 @@ def post_session():
 		response = Response()
 		response.set_cookie('session', user['id'])
 		return response
+	return JSONResponse({'errors': ['Invalid username or password']}, 400)
 
 @app.route('/sessions/<session_id>', methods=['DELETE'])
 @require_login
