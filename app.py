@@ -1,28 +1,50 @@
 from functools import wraps
 import sqlite3
 import jsonschema
-from flask import Flask, render_template, g, url_for, json, Response, request, abort, jsonify, session
+from flask import Flask, render_template, g, url_for, json, Response, request, abort, jsonify
+from flask.ext.login import LoginManager, login_user, login_required, logout_user
+
+class User:
+	def __init__(self, id=None):
+		self.id = id
+
+	def is_authenticated(self):
+		return self.id != None
+
+	def is_anonymous(self):
+		return self.id == None
+
+	def is_active(self):
+		return self.is_authenticated()
+
+	def get_id(self):
+		return self.id
+
+
 app = Flask(__name__)
+
+@app.before_request
+def before_request():
+	g.db = sqlite3.connect(app.config['DATABASE'])
+
+@app.teardown_request
+def teardown_request(exception):
+	if hasattr(g, 'db'):
+		g.db.close()
+
+login_manager = LoginManager()
+login_manager.setup_app(app)
 
 app.config['DATABASE'] = 'test.db'
 app.secret_key = '\xafW>\xe9\xa1\xc0\x7f\x05\x86\xdb%g\x87\x8c_\x7fD\x0f\x81\x0cS.\xca\xbf'
-current_user = None
 
 
-def require_login(fn):
-	@wraps(fn)
-	def wrapped(*args, **kwargs):
-		response = Response('Login Required', status=403)
-		user_id = request.cookies.get('session', None)
-		if user_id == None:
-			return response
-		users = query_db('select * from users where id=?', user_id)
-		if len(users) == 0:
-			return response
-		global current_user
-		current_user = users[0]
-		return fn(*args, **kwargs)
-	return wrapped
+@login_manager.user_loader
+def load_user(id):
+	print 'load_user', id
+	users = query_db('select * from users where id=?', id)
+	if len(users) > 0:
+		return User(users[0]['id'])
 
 def json_validate(schema):
 	def decorator(f):
@@ -43,14 +65,6 @@ def query_db(query, *args):
 	result = [dict(zip(cols, row)) for row in r.fetchall()]
 	return result
 
-@app.before_request
-def before_request():
-	g.db = sqlite3.connect(app.config['DATABASE'])
-
-@app.teardown_request
-def teardown_request(exception):
-	if hasattr(g, 'db'):
-		g.db.close()
 
 @app.route("/sitemap")
 def sitemap():
@@ -326,18 +340,16 @@ def post_user():
 def post_session():
 	user = query_db('select * from users where username=?', request.json['username'])[0]
 	if request.json['password'] == user['password']:
-		response = Response()
-		response.set_cookie('session', user['id'])
-		return response
+		user = User(user['id'])
+		login_user(user)
+		return 'success'
 	return JSONResponse({'errors': ['Invalid username or password']}, 400)
 
-@app.route('/sessions/<session_id>', methods=['DELETE'])
-@require_login
-def delete_session(session_id):
-	print request.cookies['session']
-	response = Response()
-	response.set_cookie('session', 'invalid')
-	return response
+@app.route('/sessions', methods=['DELETE'])
+@login_required
+def delete_session():
+	logout_user()
+	return 'success'
 
 if __name__ == '__main__':
 	app.run(debug=True)
