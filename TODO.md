@@ -29,36 +29,39 @@ Functions
 
 	[API]
 	--------------------
-	GET     /companies 200
-	POST    /companies 201
-	GET     /companies/<company_id> 200, 404
-	PUT     /companies/<company_id> 204, 400, 404
-	DELETE  /companies/<company_id> 204, 404
-	GET     /companies/<company_id>/projects 200, 404
+	GET     /companies 200, 401
+	POST    /companies 201, 400, 401
+	GET     /companies/<company_id> 200, 401, 403, 404
+	PUT     /companies/<company_id> 204, 400, 401, 403, 404
+	DELETE  /companies/<company_id> 204, 401, 403, 404
+	GET     /companies/<company_id>/projects 200, 401, 403, 404
 
-	GET     /projects 200
-	POST    /projects 201
-	GET     /projects/<project_id> 200, 404
-	PUT     /projects/<project_id> 204, 400, 404
-	DELETE  /projects/<project_id> 204, 404
-	GET     /projects/<project_id>/tasks 200, 404
+	GET     /projects 200, 401
+	POST    /projects 201, 400, 401
+	GET     /projects/<project_id> 200, 401, 403, 404
+	PUT     /projects/<project_id> 204, 400, 401, 403, 404
+	DELETE  /projects/<project_id> 204, 401, 403, 404
+	GET     /projects/<project_id>/tasks 200, 401, 403, 404
 
-	GET     /tasks 200
-	POST    /tasks 201
-	GET     /tasks/<task_id> 200, 404
-	PUT     /tasks/<task_id> 204, 400, 404
-	DELETE  /tasks/<task_id> 204, 404
-	GET     /tasks/<task_id>/notes 200, 404
+	GET     /tasks 200, 401
+	POST    /tasks 201, 400, 401
+	GET     /tasks/<task_id> 200, 401, 403, 404
+	PUT     /tasks/<task_id> 204, 400, 401, 403, 404
+	DELETE  /tasks/<task_id> 204, 401, 403, 404
+	GET     /tasks/<task_id>/notes 200, 401, 403, 404
 
-	GET     /notes 200
-	POST    /notes 201
-	GET     /notes/<note_id> 200, 404
-	PUT     /notes/<note_id> 204, 400, 404
-	DELETE  /notes/<note_id> 204, 404
+	GET     /notes 200, 401
+	POST    /notes 201, 400, 401
+	GET     /notes/<note_id> 200, 401, 403, 404
+	PUT     /notes/<note_id> 204, 400, 401, 403, 404
+	DELETE  /notes/<note_id> 204, 401, 403, 404
 
 	GET     /users 200
 	GET     /users/<user_id> 200, 404
 	GET     /users/<user_id>/tasks 200, 404
+
+	POST    /sessions 201, 400
+	DELETE  /sessions/<session_id> 204, 401
 
 
 

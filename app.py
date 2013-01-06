@@ -1,11 +1,24 @@
 from functools import wraps
 import sqlite3
 import jsonschema
-from flask import Flask, render_template, g, url_for, json, Response, request, abort, jsonify
+from flask import Flask, render_template, g, url_for, json, Response, request, abort, jsonify, session
 app = Flask(__name__)
 
 app.config['DATABASE'] = 'test.db'
+app.secret_key = '\xafW>\xe9\xa1\xc0\x7f\x05\x86\xdb%g\x87\x8c_\x7fD\x0f\x81\x0cS.\xca\xbf'
 
+
+def require_login(fn):
+	def wrapped(*args, **kwargs):
+		response = Response('Login Required', status=403)
+		user_id = request.cookies.get('session', None)
+		if user_id == None:
+			return response
+		users = query_db('select * from users where id=?', user_id)
+		if len(users) == 0:
+			return response
+		return fn(*args, **kwargs)
+	return wrapped
 
 def json_validate(schema):
 	def decorator(f):
@@ -14,7 +27,7 @@ def json_validate(schema):
 			v = jsonschema.Draft3Validator(schema)
 			errors = [str(error) for error in v.iter_errors(request.json)]
 			if len(errors) > 0:
-				return JSONResponse(json.dumps({'errors':errors}), 400)
+				return JSONResponse({'errors':errors}, 400)
 			return f(*args, **kwargs)
 		return decorated_function
 	return decorator
@@ -274,22 +287,52 @@ def delete_note(note_id):
 #
 # Users API
 #
-@app.route('/users')
-def users():
-	users = query_db('select * from users')
-	return json.dumps(users)
+@app.route('/users', methods=['POST'])
+@json_validate(
+	{
+		'type': 'object',
+		'additionalProperties': False,
+		'properties': {
+			'username': {'type': 'string'},
+			'password': {'type': 'string'}
+		}
+	}
+)
+def post_user():
+	g.db.execute('insert into users (username, password) values (?, ?)', (request.json['username'], request.json['password']))
+	user_id = g.db.execute('select last_insert_rowid()').fetchone()[0]
+	g.db.commit()
+	return JSONResponse({'result':user_id}, 201)
 
-@app.route('/users/<user_id>')
-def user(user_id):
-	users = query_db('select * from users where id=?', user_id)
-	return JSONResponse(users[0])
 
-@app.route('/users/<user_id>/tasks')
-def user_tasks(user_id):
-	tasks = query_db('select * from tasks where owner_id=?', user_id)
-	return JSONResponse({'items':tasks})
+#
+# Sessions API
+#
+@app.route('/sessions', methods=['POST'])
+@json_validate(
+	{
+		'type': 'object',
+		'additionalProperties': False,
+		'properties': {
+			'username': {'type': 'string'},
+			'password': {'type': 'string'}
+		}
+	}
+)
+def post_session():
+	user = query_db('select * from users where username=?', request.json['username'])[0]
+	if request.json['password'] == user['password']:
+		response = Response()
+		response.set_cookie('session', user['id'])
+		return response
 
-
+@app.route('/sessions/<session_id>', methods=['DELETE'])
+@require_login
+def delete_session(session_id):
+	print request.cookies['session']
+	response = Response()
+	response.set_cookie('session', 'invalid')
+	return response
 
 if __name__ == '__main__':
 	app.run(debug=True)
